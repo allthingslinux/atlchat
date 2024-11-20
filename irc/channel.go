@@ -1315,18 +1315,26 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 	if channel.server.Config().Slowmode.Enabled {
 		// Lock the state mutex to safely access the slowmodeCooldown map
 		channel.stateMutex.RLock()
-		cooldownTime, onCooldown := channel.slowmodeCooldown[client.Nick()]
+		_, onCooldown := channel.slowmodeCooldown[client.Nick()]
 		channel.stateMutex.RUnlock()
 
 		// If the client is on cooldown, notify the client and return
 		if onCooldown {
-			rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("You're on cooldown (%d seconds)"), cooldownTime))
+			rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), client.t("You're on cooldown"))
 			return
 		} else {
 			cooldownDuration := int(channel.server.Config().Slowmode.Duration)
 			channel.stateMutex.Lock()
 			channel.slowmodeCooldown[client.Nick()] = cooldownDuration
 			channel.stateMutex.Unlock()
+
+			// Start a goroutine to remove the cooldown asynchronously
+			go func(nick string, duration int) {
+				time.Sleep(time.Duration(duration) * time.Second)
+				channel.stateMutex.Lock()
+				delete(channel.slowmodeCooldown, nick)
+				channel.stateMutex.Unlock()
+			}(client.Nick(), cooldownDuration)
 		}
 	}
 
