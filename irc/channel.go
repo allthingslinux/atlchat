@@ -8,6 +8,7 @@ package irc
 import (
 	"fmt"
 	"maps"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -57,6 +58,7 @@ type Channel struct {
 	// these caches are paired to allow iteration over channel members without holding the lock
 	membersCache    []*Client
 	memberDataCache []*memberData
+	lastMessageTime time.Time
 }
 
 // NewChannel creates a new channel from a `Server` and a `name`
@@ -1313,6 +1315,13 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 		if histType != history.Notice {
 			rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("Cannot send to channel (+%s)"), "C"))
 		}
+		return
+	}
+
+	// Regex filter to block the word "test"
+	re := regexp.MustCompile(`\btest\b`)
+	if re.MatchString(message.Message) {
+		rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), client.t("Message contains blocked content"))
 		return
 	}
 
