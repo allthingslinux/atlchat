@@ -1065,7 +1065,7 @@ history:
 # e.g., ERGO__SERVER__MAX_SENDQ=128k. see the manual for more details.
 allow-environment-overrides: true
 
-atl-automod:
+automod:
     enabled: true
     rules:
         - name: "test"
@@ -1077,3 +1077,8 @@ atl-automod:
 
         - name: "this regex string is definitely forbidden."
           regex_string: "(?i)\\b(meow|woof)\\b"
+
+slowmode:
+    enabled: true
+    # duration in seconds (don't add "s" at the end)
+    duration: 5

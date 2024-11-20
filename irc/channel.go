@@ -51,9 +51,9 @@ type Channel struct {
 	settings          ChannelSettings
 	uuid              utils.UUID
 	// these caches are paired to allow iteration over channel members without holding the lock
-	membersCache    []*Client
-	memberDataCache []*memberData
-	lastMessageTime time.Time
+	membersCache     []*Client
+	memberDataCache  []*memberData
+	slowmodeCooldown map[string]int // map to store cooldowns for users in seconds
 }
 
 // NewChannel creates a new channel from a `Server` and a `name`
@@ -62,11 +62,12 @@ func NewChannel(s *Server, name, casefoldedName string, registered bool, regInfo
 	config := s.Config()
 
 	channel := &Channel{
-		createdTime:    time.Now().UTC(), // may be overwritten by applyRegInfo
-		members:        make(MemberSet),
-		name:           name,
-		nameCasefolded: casefoldedName,
-		server:         s,
+		createdTime:      time.Now().UTC(), // may be overwritten by applyRegInfo
+		members:          make(MemberSet),
+		name:             name,
+		nameCasefolded:   casefoldedName,
+		server:           s,
+		slowmodeCooldown: make(map[string]int), // initialize the cooldown map
 	}
 
 	channel.initializeLists()
@@ -1308,6 +1309,25 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 			rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("Cannot send to channel (+%s)"), "C"))
 		}
 		return
+	}
+
+	// Check if slowmode is enabled
+	if channel.server.Config().Slowmode.Enabled {
+		// Lock the state mutex to safely access the slowmodeCooldown map
+		channel.stateMutex.RLock()
+		cooldownTime, onCooldown := channel.slowmodeCooldown[client.Nick()]
+		channel.stateMutex.RUnlock()
+
+		// If the client is on cooldown, notify the client and return
+		if onCooldown {
+			rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("You're on cooldown (%d seconds)"), cooldownTime))
+			return
+		} else {
+			cooldownDuration := int(channel.server.Config().Slowmode.Duration)
+			channel.stateMutex.Lock()
+			channel.slowmodeCooldown[client.Nick()] = cooldownDuration
+			channel.stateMutex.Unlock()
+		}
 	}
 
 	// Check if automod is enabled

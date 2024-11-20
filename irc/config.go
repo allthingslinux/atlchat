@@ -555,6 +555,11 @@ type AutomodConfig struct {
 	Rules   []AutomodRule `yaml:"rules"`
 }
 
+type SlowmodeConfig struct {
+	Enabled  bool `yaml:"enabled"`
+	Duration int  `yaml:"duration"`
+}
+
 // Config defines the overall configuration.
 type Config struct {
 	AllowEnvironmentOverrides bool `yaml:"allow-environment-overrides"`
@@ -721,7 +726,8 @@ type Config struct {
 
 	Filename string
 
-	Automod AutomodConfig `yaml:"atl-automod"`
+	Automod  AutomodConfig  `yaml:"automod"`
+	Slowmode SlowmodeConfig `yaml:"slowmode"`
 }
 
 // OperClass defines an assembled operator class.
