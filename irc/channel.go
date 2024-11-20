@@ -1312,7 +1312,7 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 	}
 
 	// Check if slowmode is enabled
-	if channel.server.Config().Slowmode.Enabled {
+	if channel.server.Config().Slowmode.Enabled && !client.HasRoleCapabs("noslowmode") {
 		// Lock the state mutex to safely access the slowmodeCooldown map
 		channel.stateMutex.RLock()
 		cooldownTime, onCooldown := channel.slowmodeCooldown[client.Nick()]
@@ -1339,7 +1339,7 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 	}
 
 	// Check if automod is enabled
-	if channel.server.Config().Automod.Enabled {
+	if channel.server.Config().Automod.Enabled && !client.HasRoleCapabs("noautomod") {
 		// Check message against automod rules
 		for _, rule := range channel.server.Config().Automod.Rules {
 			if rule.RegexString != "" {
