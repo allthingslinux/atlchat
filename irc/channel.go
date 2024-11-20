@@ -1,8 +1,3 @@
-// Copyright (c) 2012-2014 Jeremy Latt
-// Copyright (c) 2014-2015 Edmund Huber
-// Copyright (c) 2016-2017 Daniel Oaks <daniel@danieloaks.net>
-// released under the MIT license
-
 package irc
 
 import (
@@ -864,10 +859,7 @@ func (channel *Channel) Join(client *Client, key string, isSajoin bool, rb *Resp
 		}
 		for _, session := range member.Sessions() {
 			if session == rb.session {
-				continue
-			} else if client == session.client {
-				channel.playJoinForSession(session)
-				continue
+				continue // we already sent echo-message, if applicable
 			}
 			if session.capabilities.Has(caps.ExtendedJoin) {
 				session.sendFromClientInternal(false, message.Time, message.Msgid, details.nickMask, details.accountName, isBot, nil, "JOIN", chname, details.accountName, details.realname)
@@ -1318,11 +1310,21 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 		return
 	}
 
-	// Regex filter to block the word "test"
-	re := regexp.MustCompile(`\btest\b`)
-	if re.MatchString(message.Message) {
-		rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), client.t("Message contains blocked content"))
-		return
+	// Check message against automod rules
+	for _, rule := range channel.server.Config().Automod.Rules {
+		if rule.RegexString != "" {
+			re := regexp.MustCompile(rule.RegexString)
+			if re.MatchString(message.Message) {
+				rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("Message blocked by rule: %s"), rule.Name))
+				return
+			}
+		}
+		for _, word := range rule.BlockedWords {
+			if strings.Contains(message.Message, word) {
+				rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("Message blocked by rule: %s"), rule.Name))
+				return
+			}
+		}
 	}
 
 	details := client.Details()

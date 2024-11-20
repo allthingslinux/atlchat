@@ -544,6 +544,17 @@ type TorListenersConfig struct {
 	MaxConnectionsPerDuration int           `yaml:"max-connections-per-duration"`
 }
 
+type AutomodRule struct {
+	Name         string   `yaml:"name"`
+	RegexString  string   `yaml:"regex_string"`
+	BlockedWords []string `yaml:"blocked_words"`
+}
+
+type AutomodConfig struct {
+	Enabled bool          `yaml:"enabled"`
+	Rules   []AutomodRule `yaml:"rules"`
+}
+
 // Config defines the overall configuration.
 type Config struct {
 	AllowEnvironmentOverrides bool `yaml:"allow-environment-overrides"`
@@ -709,6 +720,8 @@ type Config struct {
 	}
 
 	Filename string
+
+	Automod AutomodConfig `yaml:"atl-automod"`
 }
 
 // OperClass defines an assembled operator class.
