@@ -35,9 +35,6 @@ COPY --from=build-env /go/bin/ergo \
 VOLUME /ircd
 WORKDIR /ircd
 
-# default motd
-COPY --from=build-env /go/src/github.com/ergochat/ergo/ergo.motd /ircd/ergo.motd
-
 # launch
 ENTRYPOINT ["/ircd-bin/run.sh"]
 
