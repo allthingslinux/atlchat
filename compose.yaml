@@ -1,0 +1,31 @@
+services:
+  ergo:
+    init: true
+    container_name: ergo
+    build: .
+    ports:
+      - "6667:6667/tcp"
+      - "6697:6697/tcp"
+    volumes:
+      - data:/ircd
+      - ./ircd.yaml:/ircd/ircd.yaml:ro
+      - ./certs:/ircd/certs:ro
+    deploy:
+      placement:
+        constraints:
+          - "node.role == manager"
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+
+  matterbridge:
+    image: 42wim/matterbridge:stable
+    container_name: matterbridge
+    # restart: unless-stopped
+    depends_on:
+      - ergo
+    volumes:
+      - ./matterbridge.toml:/etc/matterbridge/matterbridge.toml:ro
+
+volumes:
+  data:
