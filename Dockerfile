@@ -30,7 +30,6 @@ COPY --from=build-env /go/bin/ergo \
                       /go/src/github.com/ergochat/ergo/default.yaml \
                       /go/src/github.com/ergochat/ergo/distrib/docker/run.sh \
                       /ircd-bin/
-COPY --from=build-env /go/src/github.com/ergochat/ergo/languages /ircd-bin/languages/
 
 # running volume holding config file, db, certs
 VOLUME /ircd
