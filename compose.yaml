@@ -1,7 +1,7 @@
 services:
-  ergo:
+  atlchat:
     init: true
-    container_name: ergo
+    container_name: atlchat
     build: .
     ports:
       - "6697:6697/tcp"
@@ -23,7 +23,7 @@ services:
     container_name: matterbridge
     restart: unless-stopped
     depends_on:
-      - ergo
+      - atlchat
     volumes:
       - ./matterbridge.toml:/etc/matterbridge/matterbridge.toml:ro
 
