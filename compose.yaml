@@ -10,6 +10,7 @@ services:
       - data:/ircd
       - ./ircd.yaml:/ircd/ircd.yaml:ro
       - ./certs:/ircd/certs:ro
+      - ./ircd.db:/ircd/ircd.db
     deploy:
       placement:
         constraints:
@@ -17,15 +18,23 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 1
+    networks:
+      - bridge_network
 
   matterbridge:
     image: 42wim/matterbridge:stable
     container_name: matterbridge
-    # restart: unless-stopped
+    restart: unless-stopped
     depends_on:
       - ergo
     volumes:
       - ./matterbridge.toml:/etc/matterbridge/matterbridge.toml:ro
+    networks:
+      - bridge_network
 
 volumes:
   data:
+
+networks:
+  bridge_network:
+    driver: bridge

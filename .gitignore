@@ -112,3 +112,4 @@ ergo.mprof
 *.pem
 .dccache
 matterbridge.toml
+*.motd
