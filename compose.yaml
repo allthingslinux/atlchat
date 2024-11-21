@@ -4,13 +4,12 @@ services:
     container_name: ergo
     build: .
     ports:
-      - "6667:6667/tcp"
       - "6697:6697/tcp"
     volumes:
       - data:/ircd
       - ./ircd.yaml:/ircd/ircd.yaml:ro
+      - ./ergo.motd:/ircd/ergo.motd
       - ./certs:/ircd/certs:ro
-      - ./ircd.db:/ircd/ircd.db
     deploy:
       placement:
         constraints:
@@ -18,8 +17,6 @@ services:
       restart_policy:
         condition: on-failure
       replicas: 1
-    networks:
-      - bridge_network
 
   matterbridge:
     image: 42wim/matterbridge:stable
@@ -29,12 +26,6 @@ services:
       - ergo
     volumes:
       - ./matterbridge.toml:/etc/matterbridge/matterbridge.toml:ro
-    networks:
-      - bridge_network
 
 volumes:
   data:
-
-networks:
-  bridge_network:
-    driver: bridge
