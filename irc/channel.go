@@ -1350,7 +1350,8 @@ func (channel *Channel) SendSplitMessage(command string, minPrefixMode modes.Mod
 				}
 			}
 			for _, word := range rule.BlockedWords {
-				if strings.Contains(message.Message, word) {
+				re := regexp.MustCompile(`\b` + regexp.QuoteMeta(word) + `\b`)
+				if re.MatchString(message.Message) {
 					rb.Add(nil, client.server.name, ERR_CANNOTSENDTOCHAN, client.Nick(), channel.Name(), fmt.Sprintf(client.t("Message blocked by rule: %s"), rule.Name))
 					return
 				}
